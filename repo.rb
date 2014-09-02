@@ -19,6 +19,7 @@ class Repo
   end
 
   def blame
+    puts "file,line count,committer 1,line count 1,committer 2,line count 2,committer 3,line count 3"
     @files.each do |file|
       f = Blame.new({repo: @repo, file: file})
       f.output(3)
