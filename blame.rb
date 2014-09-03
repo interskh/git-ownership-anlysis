@@ -1,7 +1,7 @@
 require 'json'
 
 class Blame
-  attr_reader :file, :repo
+  attr_reader :file, :repo, :excluded
 
   def initialize(args)
     @authors = Hash.new(0)
@@ -23,12 +23,16 @@ class Blame
         .encode('utf-8', 'utf-8', :invalid => :replace).lines.each do |line|
         if /^author (.+)$/ =~ line
           author = line[/^author (.+)$/, 1]
-          @authors[author] += 1
+          if @excluded.nil? or not @excluded.include? author.downcase
+            @authors[author] += 1
+          end
           @line += 1
         end
         if /^author-time (.+)$/ =~ line
-          ts = line[/^author-time (.+)$/, 1].to_i
-          @author_scores[author] += 1.0/(1+(@cur_ts - ts)/60/60/24/90) # 90 days
+          if @excluded.nil? or not @excluded.include? author.downcase
+            ts = line[/^author-time (.+)$/, 1].to_i
+            @author_scores[author] += 1.0/(1+(@cur_ts - ts)/60/60/24/90) # 90 days
+          end
         end
       end
       @ready = true
@@ -42,7 +46,7 @@ class Blame
   end
 
   def output(n)
-    unless @authors.empty?
+    unless @line == 0
       puts "#{@file},#{@line},#{top_authors(n).map{|a| a.join(",")}.join(",")}"
     end
   end
